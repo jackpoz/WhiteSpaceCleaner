@@ -46,6 +46,7 @@ namespace WhiteSpaceCleaner
                     string[] lines = File.ReadAllLines(fi.FullName);
                     string previousLine = "", currentLine = "";
                     bool modified = false;
+                    bool isInsideComment = false;
 
                     // Process 1 line at a time
                     for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
@@ -53,12 +54,32 @@ namespace WhiteSpaceCleaner
                         previousLine = currentLine;
                         currentLine = lines[lineIndex];
 
+                        if (isInsideComment)
+                        {
+                            if (currentLine.TrimEnd(' ').EndsWith("*/"))
+                            {
+                                isInsideComment = false;
+                            }
+
+                            continue;
+                        }
+
+                        if (currentLine.TrimStart(' ').StartsWith("/*"))
+                        {
+                            isInsideComment = true;
+                            continue;
+                        }
+
                         // Ignore defines/includes
                         if (currentLine.TrimStart(' ').StartsWith("#"))
                             continue;
 
                         // Ignore comments
                         if (currentLine.TrimStart(' ').StartsWith("/") || currentLine.TrimStart(' ').StartsWith("*"))
+                            continue;
+
+                        // Skip multi-line macros
+                        if (previousLine.EndsWith("\\"))
                             continue;
 
                         match = matchWhiteSpace.Match(currentLine);
