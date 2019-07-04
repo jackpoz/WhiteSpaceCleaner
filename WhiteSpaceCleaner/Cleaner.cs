@@ -11,6 +11,8 @@ namespace WhiteSpaceCleaner
 {
     class Cleaner
     {
+        const string WhiteSpaceRegex = @"[^ \n#] ( +)[^ \n\/=]";
+
         public static void Clean(ParseOptions options)
         {
             Console.WriteLine("Parsed options: " + CommandLine.Parser.Default.FormatCommandLine(options));
@@ -23,7 +25,7 @@ namespace WhiteSpaceCleaner
             }
 
             // Match all whitespace with more than 1 space at least
-            Regex matchWhiteSpace = new Regex("\\b ( +)\\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            Regex matchWhiteSpace = new Regex(WhiteSpaceRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             Match match;
 
             var extensions = options.FileExt.Select(e =>
@@ -48,8 +50,8 @@ namespace WhiteSpaceCleaner
                         previousLine = currentLine;
                         currentLine = lines[lineIndex];
 
-                        // Ignore defines
-                        if (currentLine.Contains("#define"))
+                        // Ignore defines/includes
+                        if (currentLine.TrimStart(' ').StartsWith("#"))
                             continue;
 
                         // Ignore comments
