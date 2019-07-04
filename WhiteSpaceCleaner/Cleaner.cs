@@ -40,6 +40,9 @@ namespace WhiteSpaceCleaner
             {
                 foreach (var fi in dirInfo.EnumerateFiles(ext, SearchOption.AllDirectories))
                 {
+                    if (options.SkipFiles.Contains(fi.Name))
+                        continue;
+
                     string[] lines = File.ReadAllLines(fi.FullName);
                     string previousLine = "", currentLine = "";
                     bool modified = false;
