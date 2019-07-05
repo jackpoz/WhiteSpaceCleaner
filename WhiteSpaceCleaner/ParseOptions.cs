@@ -13,7 +13,7 @@ namespace WhiteSpaceCleaner
         public string Path { get; private set; }
         [Option]
         public bool CheckOnly { get; private set; }
-        [Option(Separator = ',')]
+        [Option(Separator = ',', Required = true)]
         public IEnumerable<string> FileExt { get; private set; }
         [Option(Separator = ',')]
         public IEnumerable<string> SkipFiles { get; private set; }
