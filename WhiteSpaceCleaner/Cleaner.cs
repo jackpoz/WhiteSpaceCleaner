@@ -24,6 +24,9 @@ namespace WhiteSpaceCleaner
                 return;
             }
 
+            if (options.CheckOnly)
+                throw new NotImplementedException("CheckOnly property is currently not implemented");
+
             // Match all whitespace with more than 1 space at least
             Regex matchWhiteSpace = new Regex(WhiteSpaceRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             Match match;
