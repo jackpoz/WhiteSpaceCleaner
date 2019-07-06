@@ -11,7 +11,8 @@ namespace WhiteSpaceCleaner
 {
     class Cleaner
     {
-        const string WhiteSpaceRegex = @"[^ \n#] ( +)[^ \n\/=]";
+        const string WhiteSpaceRegex = @"[^ \n#] ( +)[^ \n\/]";
+        const string MultiDimArrayRegex = @"\[.+\]\[.+\][^;].*="; // need to change it so that = is the last character of the line
 
         public static void Clean(ParseOptions options)
         {
@@ -28,8 +29,8 @@ namespace WhiteSpaceCleaner
                 throw new NotImplementedException("CheckOnly property is currently not implemented");
 
             // Match all whitespace with more than 1 space at least
-            Regex matchWhiteSpace = new Regex(WhiteSpaceRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Match match;
+            Regex regexWhiteSpace = new Regex(WhiteSpaceRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);            
+            Regex regexMultiDimArray = new Regex(MultiDimArrayRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var extensions = options.FileExt.Select(e =>
             {
@@ -49,7 +50,10 @@ namespace WhiteSpaceCleaner
                     string[] lines = File.ReadAllLines(fi.FullName);
                     string previousLine = "", currentLine = "";
                     bool modified = false;
+
                     bool isInsideComment = false;
+                    bool isInsideEnum = false;
+                    bool isInsideMultiDimArray = false;
 
                     // Process 1 line at a time
                     for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
@@ -57,6 +61,9 @@ namespace WhiteSpaceCleaner
                         previousLine = currentLine;
                         currentLine = lines[lineIndex];
 
+                        string currentLineTrimStart = currentLine.TrimStart(' ');
+
+                        // Ignore multi-line comments
                         if (isInsideComment)
                         {
                             if (currentLine.TrimEnd(' ').EndsWith("*/"))
@@ -66,30 +73,67 @@ namespace WhiteSpaceCleaner
 
                             continue;
                         }
-
-                        if (currentLine.TrimStart(' ').StartsWith("/*"))
+                        if (currentLineTrimStart.StartsWith("/*"))
                         {
                             isInsideComment = true;
                             continue;
                         }
 
+                        // Ignore enums
+                        if (isInsideEnum)
+                        {
+                            // Try to find the closing brace of enum declaration but skip comments
+                            if (currentLine.IndexOf("};") > currentLine.IndexOf("//"))
+                            {
+                                isInsideEnum = false;
+                            }
+
+                            continue;
+                        }
+                        if (currentLineTrimStart.StartsWith("enum "))
+                        {
+                            isInsideEnum = true;
+                            continue;
+                        }
+
+                        // Ignore multi-dimension arrays
+                        if (isInsideMultiDimArray)
+                        {
+                            // Try to find the closing brace of array declaration but skip comments
+                            if (currentLine.IndexOf("};") > currentLine.IndexOf("//"))
+                            {
+                                isInsideMultiDimArray = false;
+                            }
+
+                            continue;
+                        }
+                        if (regexMultiDimArray.IsMatch(currentLine))
+                        {
+                            isInsideMultiDimArray = true;
+                            continue;
+                        }
+
                         // Ignore defines/includes
-                        if (currentLine.TrimStart(' ').StartsWith("#"))
+                        if (currentLineTrimStart.StartsWith("#"))
                             continue;
 
                         // Ignore comments
-                        if (currentLine.TrimStart(' ').StartsWith("/") || currentLine.TrimStart(' ').StartsWith("*"))
+                        if (currentLineTrimStart.StartsWith("/") || currentLineTrimStart.StartsWith("*"))
+                            continue;
+
+                        // Ignore typedef
+                        if (currentLineTrimStart.StartsWith("typedef"))
                             continue;
 
                         // Skip multi-line macros
                         if (previousLine.EndsWith("\\"))
                             continue;
 
-                        match = matchWhiteSpace.Match(currentLine);
-                        if (match.Success)
+                        Match matchWhiteSpace = regexWhiteSpace.Match(currentLine);
+                        if (matchWhiteSpace.Success)
                         {
-                            int matchIndex = match.Groups[1].Index;
-                            int matchLength = match.Groups[1].Length;
+                            int matchIndex = matchWhiteSpace.Groups[1].Index;
+                            int matchLength = matchWhiteSpace.Groups[1].Length;
                             int spacesToAddBeforeComment = 0;
                             int currentLineCommentIndex = currentLine.IndexOf("//");
                             if (currentLineCommentIndex != -1)
