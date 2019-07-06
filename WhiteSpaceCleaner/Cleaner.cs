@@ -25,9 +25,6 @@ namespace WhiteSpaceCleaner
                 return;
             }
 
-            if (options.CheckOnly)
-                throw new NotImplementedException("CheckOnly property is currently not implemented");
-
             // Match all whitespace with more than 1 space at least
             Regex regexWhiteSpace = new Regex(WhiteSpaceRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);            
             Regex regexMultiDimArray = new Regex(MultiDimArrayRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -167,6 +164,8 @@ namespace WhiteSpaceCleaner
                                 }
                             }
 
+                            Console.WriteLine($"File {fi.FullName} line {lineIndex + 1} text '{currentLine}'");
+
                             // Add the spaces before // if needed
                             if (spacesToAddBeforeComment != 0)
                             {
@@ -181,7 +180,7 @@ namespace WhiteSpaceCleaner
                         }
                     }
 
-                    if (modified)
+                    if (modified && !options.CheckOnly)
                         File.WriteAllLines(fi.FullName, lines);
                 }
             }
