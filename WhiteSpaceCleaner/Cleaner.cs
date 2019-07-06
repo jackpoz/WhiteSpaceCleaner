@@ -12,7 +12,7 @@ namespace WhiteSpaceCleaner
     class Cleaner
     {
         const string WhiteSpaceRegex = @"[^ \n#] ( +)[^ \n\/]";
-        const string MultiDimArrayRegex = @"\[.+\]\[.+\][^;].*="; // need to change it so that = is the last character of the line
+        const string MultiDimArrayRegex = @"\[.+\]\[.+\][^;].*=$";
 
         public static void Clean(ParseOptions options)
         {
